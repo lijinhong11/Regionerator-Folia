@@ -25,6 +25,9 @@ public abstract class RegionInfo {
 
 	private static final String[] ACCEPTABLE_IO_EXCEPTIONS = { "Text file busy" };
 
+	public static final int CHUNKS_PER_AXIS = 32;
+	public static final int TOTAL_CHUNKS = 1024;
+
 	private final @NotNull WorldInfo world;
 	private final int lowestChunkX, lowestChunkZ;
 
