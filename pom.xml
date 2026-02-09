@@ -229,7 +229,7 @@
       </exclusions>
     </dependency>
 
-    <!-- Linear Region Required (use plugin.yml libraries to load) -->
+    <!-- Linear Region Required -->
     <dependency>
       <groupId>com.github.luben</groupId>
       <artifactId>zstd-jni</artifactId>
