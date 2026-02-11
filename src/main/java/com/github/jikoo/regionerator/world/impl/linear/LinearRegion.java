@@ -542,7 +542,11 @@ public class LinearRegion extends RegionInfo {
     }
 
     private boolean shouldCleanupChunk(long timestamp, long now) {
-        int expiredDays = Regionerator.getInstance().getConfig().getInt("world." + getWorld().getName() + "days-till-flag-expires");
+        int expiredDays = Regionerator.getInstance().config().getExpiredDaysInWorld(getWorld());
+        if (expiredDays == -1) {
+            return false;
+        }
+
         long seconds = TimeUnit.DAYS.convert(expiredDays, TimeUnit.SECONDS);
         return now - timestamp >= seconds;
     }

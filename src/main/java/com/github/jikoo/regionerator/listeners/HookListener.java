@@ -86,5 +86,4 @@ public class HookListener implements Listener {
 			}
 		}
 	}
-
 }

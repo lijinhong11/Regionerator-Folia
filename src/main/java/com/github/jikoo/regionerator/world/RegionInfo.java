@@ -44,6 +44,14 @@ public abstract class RegionInfo {
 		this.lowestChunkZ = lowestChunkZ;
 	}
 
+	public static int getRegionX(int chunkX) {
+		return Math.floorDiv(chunkX, 32);
+	}
+
+	public static int getRegionZ(int chunkZ) {
+		return Math.floorDiv(chunkZ, 32);
+	}
+
 	/**
 	 * Reads the RegionInfo into memory.
 	 *

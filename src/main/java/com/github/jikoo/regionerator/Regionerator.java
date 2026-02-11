@@ -10,6 +10,7 @@
 
 package com.github.jikoo.regionerator;
 
+import com.github.jikoo.regionerator.activity.ChunkActivityTracker;
 import com.github.jikoo.regionerator.commands.RegioneratorExecutor;
 import com.github.jikoo.regionerator.hooks.Hook;
 import com.github.jikoo.regionerator.hooks.PluginHook;
@@ -48,9 +49,10 @@ public class Regionerator extends JavaPlugin {
 
 	public final Map<String, DeletionRunnable> deletionRunnables = new ConcurrentHashMap<>();
 	private final Set<Hook> protectionHooks = Collections.newSetFromMap(new ConcurrentHashMap<>());
-	private final WorldManager worldManager = new WorldManager(this);
 	private final AtomicBoolean paused = new AtomicBoolean();
 	private final FoliaLib foliaLib = new FoliaLib(this);
+	private final ChunkActivityTracker tracker = new ChunkActivityTracker();
+	private WorldManager worldManager;
 	private ChunkFlagger chunkFlagger;
 	private Config config;
 	private MiscData miscData;
@@ -65,8 +67,6 @@ public class Regionerator extends JavaPlugin {
 		config = new Config(this);
 		miscData = new MiscData(this, new File(getDataFolder(), "data.yml"));
 
-		foliaLib.enableInvalidTickValueDebug();
-
 		boolean migrated = false;
 		Set<String> worlds = getServer().getWorlds().stream().map(World::getName).filter(config::isEnabled).collect(Collectors.toSet());
 		for (String world : worlds) {
@@ -79,6 +79,21 @@ public class Regionerator extends JavaPlugin {
 		if (migrated) {
 			getConfig().set("delete-this-to-reset-plugin", null);
 			saveConfig();
+		}
+
+		try {
+			RegionImplementation regionImpl = RegionImplementation.valueOf(getConfig().getString("world-implementation", "NONE").toUpperCase());
+			if (regionImpl == RegionImplementation.NONE) {
+				getLogger().severe("Region implementation is not set, plugin will shutdown! Available options: LINEAR, ANVIL");
+				getServer().getPluginManager().disablePlugin(this);
+				return;
+			} else {
+				worldManager = new WorldManager(this, regionImpl);
+			}
+		} catch (Exception e) {
+			getLogger().severe("Wrong region implementation, plugin will shutdown! Available options: LINEAR, ANVIL");
+			getServer().getPluginManager().disablePlugin(this);
+			return;
 		}
 
 		chunkFlagger = new ChunkFlagger(this);
@@ -110,6 +125,10 @@ public class Regionerator extends JavaPlugin {
 				getLogger().severe("No worlds are enabled. There's nothing to do!");
 				return;
 			}
+
+			// Enable world case correction listener.
+			getServer().getPluginManager().registerEvents(new WorldListener(this), this);
+			getServer().getPluginManager().registerEvents(new ChunkActivityListener(tracker), this);
 
 			reloadFeatures();
 
@@ -159,8 +178,6 @@ public class Regionerator extends JavaPlugin {
 
 		debug(DebugLevel.LOW, () -> "Loading features...");
 
-		// Enable world case correction listener.
-		getServer().getPluginManager().registerEvents(new WorldListener(this), this);
 		// Enable rescue tagging listener.
 		getServer().getPluginManager().registerEvents(new RescueListener(this), this);
 		// Always enable hook listener in case someone else adds hooks.
@@ -243,6 +260,10 @@ public class Regionerator extends JavaPlugin {
 
 	public @NotNull WorldManager getWorldManager() {
 		return worldManager;
+	}
+
+	public ChunkActivityTracker getTracker() {
+		return tracker;
 	}
 
 	void finishCycle(@NotNull DeletionRunnable runnable) {
@@ -342,8 +363,8 @@ public class Regionerator extends JavaPlugin {
 		return false;
 	}
 
-	public boolean removeHook(Hook hook) {
-		return this.protectionHooks.remove(hook);
+	public void removeHook(Hook hook) {
+		this.protectionHooks.remove(hook);
 	}
 
 	public static Regionerator getInstance() {

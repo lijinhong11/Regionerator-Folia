@@ -14,6 +14,7 @@ import com.github.jikoo.regionerator.world.ChunkInfo;
 import com.github.jikoo.regionerator.world.RegionInfo;
 import com.github.jikoo.regionerator.world.WorldInfo;
 import com.tcoded.folialib.wrapper.task.WrappedTask;
+import org.bukkit.Chunk;
 import org.bukkit.World;
 import org.bukkit.plugin.IllegalPluginAccessException;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +52,7 @@ public class DeletionRunnable implements Consumer<WrappedTask> {
 	private int nextLogCount = 20;
 
 	private WrappedTask taskInstance;
+	private List<Chunk> lessInteractChunks = new ArrayList<>();
 
 	DeletionRunnable(@NotNull Regionerator plugin, @NotNull World world) {
 		this.plugin = plugin;
@@ -75,6 +77,9 @@ public class DeletionRunnable implements Consumer<WrappedTask> {
 			plugin.getLogger().severe("Unable to access world data!");
 			plugin.getLogger().log(Level.SEVERE, "Error accessing world data on main thread", e);
 		}
+
+		int days = plugin.config().getExpiredDaysInWorld(world.getWorld());
+		lessInteractChunks = plugin.getTracker().pollExpiredChunks(world.getWorld(), days);
 
 		if (regions != null) {
 			regions.forEach(this::handleRegion);
@@ -233,8 +238,10 @@ public class DeletionRunnable implements Consumer<WrappedTask> {
 	}
 
 	private boolean isDeleteEligible(@NotNull ChunkInfo chunkInfo) {
+		World world = chunkInfo.getWorld();
+
 		if (isCancelled()) {
-			// If task is cancelled, report all chunks ineligible for deletion
+			// If task is canceled, report all chunks ineligible for deletion
 			plugin.debug(DebugLevel.HIGH, () -> "Deletion task is cancelled, chunks are ineligible for delete.");
 			return false;
 		}
@@ -242,13 +249,19 @@ public class DeletionRunnable implements Consumer<WrappedTask> {
 		if (chunkInfo.isOrphaned()) {
 			// Chunk already deleted
 			plugin.debug(DebugLevel.HIGH, () -> String.format("Chunk %s_%s_%s is already orphaned.",
-					chunkInfo.getWorld().getName(), chunkInfo.getChunkX(), chunkInfo.getChunkZ()));
+					world.getName(), chunkInfo.getChunkX(), chunkInfo.getChunkZ()));
 			return true;
 		}
 
 		long now = System.currentTimeMillis();
 		long lastVisit = chunkInfo.getLastVisit();
-		boolean isFresh = !plugin.config().isDeleteFreshChunks(chunkInfo.getWorld()) && lastVisit == plugin.config().getFlagGenerated(chunkInfo.getWorld());
+		boolean isFresh = !plugin.config().isDeleteFreshChunks(world) && lastVisit == plugin.config().getFlagGenerated(world);
+
+		if (lessInteractChunks.contains(chunkInfo.getBukkitChunk())) {
+			plugin.debug(DebugLevel.HIGH, () -> String.format("Chunk %s_%s_%s is marked as delete because of less interactions",
+					chunkInfo.getWorld().getName(), chunkInfo.getChunkX(), chunkInfo.getChunkZ()));
+			return true;
+		}
 
 		if (!isFresh && now <= lastVisit) {
 			// Chunk is visited
@@ -329,5 +342,4 @@ public class DeletionRunnable implements Consumer<WrappedTask> {
 	@NotNull Phaser getPhaser() {
 		return phaser;
 	}
-
 }

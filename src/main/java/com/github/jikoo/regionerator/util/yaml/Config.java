@@ -132,6 +132,22 @@ public class Config extends ConfigYamlData {
 		}
 	}
 
+	public int getExpiredDaysInWorld(World world) {
+		if (raw().contains("worlds.default.days-till-flag-expires")) {
+			return getInt("worlds.default.days-till-flag-expires");
+		} else {
+			return raw().getInt("worlds." + world.getName() + ".days-till-flag-expires", -1);
+		}
+	}
+
+	public int getMinInteractionsInWorld(World world) {
+		if (raw().contains("worlds.default.min-interactions")) {
+			return getInt("worlds.default.min-interactions");
+		} else {
+			return raw().getInt("worlds." + world.getName() + ".days-till-flag-expires", -1);
+		}
+	}
+
 	public int getDeletionChunkCount() {
 		return deletionChunkCount.get();
 	}
@@ -249,5 +265,4 @@ public class Config extends ConfigYamlData {
 		}
 		return world;
 	}
-
 }
