@@ -23,6 +23,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.Clock;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import java.util.stream.IntStream;
@@ -507,7 +508,6 @@ public class LinearRegion extends RegionInfo {
 
         cleanupChunksBeforeWrite();
 
-        // 3. 调用 flush 写盘
         try {
             flush();
             return true;
@@ -591,7 +591,7 @@ public class LinearRegion extends RegionInfo {
             int index = getChunkIndex(getLocalChunkX(), getLocalChunkZ());
             buffer[index] = null;
             bufferUncompressedSize[index] = 0;
-            chunkTimestamps[index] = 0;
+            chunkTimestamps[index] = getTimestamp();
             orphaned[index] = true;
             markToSave();
         }
@@ -634,7 +634,7 @@ public class LinearRegion extends RegionInfo {
         int i = getChunkIndex(pos.x, pos.z);
         this.buffer[i] = null;
         this.bufferUncompressedSize[i] = 0;
-        this.chunkTimestamps[i] = System.currentTimeMillis();
+        this.chunkTimestamps[i] = getTimestamp();
         markToSave();
     }
 
@@ -654,7 +654,7 @@ public class LinearRegion extends RegionInfo {
     }
 
     private static int getTimestamp() {
-        return (int) (System.currentTimeMillis() / 1000L);
+        return (int) Clock.systemUTC().instant().getEpochSecond();
     }
 
     @Deprecated
