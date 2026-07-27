@@ -264,11 +264,10 @@ public class LinearRegion extends RegionInfo {
         }
 
         int[] bucketSizes = new int[gridSize * gridSize];
-        //byte[] bucketCompressionLevels = new byte[gridSize * gridSize];
         long[] bucketHashes = new long[gridSize * gridSize];
         for (int i = 0; i < gridSize * gridSize; i++) {
             bucketSizes[i] = buffer.getInt();
-            //bucketCompressionLevels[i] = buffer.get();
+            buffer.get(); // Skip compression level
             bucketHashes[i] = buffer.getLong();
         }
 

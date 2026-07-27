@@ -33,8 +33,9 @@ class LinearRegionTest {
     Path tempDir;
 
     @Test
-    void convertsRegionCoordinatesToLowestChunkCoordinates() {
-        LinearRegion region = new LinearRegion(null, tempDir.resolve("r.-2.3.linear"), 1, -2, 3);
+    void convertsRegionCoordinatesToLowestChunkCoordinates() throws IOException {
+        Path path = Files.createTempFile(tempDir, "r.-2.3", "linear");
+        LinearRegion region = new LinearRegion(null, path, 1, -2, 3);
 
         assertEquals(-64, region.getLowestChunkX());
         assertEquals(96, region.getLowestChunkZ());
@@ -42,7 +43,7 @@ class LinearRegionTest {
 
     @Test
     void readsChunkExistenceAndTimestampFromLazyBucket() throws IOException {
-        Path path = tempDir.resolve("r.0.0.linear");
+        Path path = Files.createTempFile(tempDir, "r.0.0", "linear");
         writeLinearRegion(path, 1234L, new byte[] {1, 2, 3});
         LinearRegion region = new LinearRegion(null, path, 1, 0, 0);
 
@@ -54,7 +55,7 @@ class LinearRegionTest {
 
     @Test
     void writesOrphanedChunkSynchronously() throws IOException {
-        Path path = tempDir.resolve("r.0.0.linear");
+        Path path = Files.createTempFile(tempDir, "r.0.0", "linear");
         writeLinearRegion(path, 1234L, new byte[] {1, 2, 3});
         LinearRegion region = new LinearRegion(null, path, 1, 0, 0);
 
@@ -70,7 +71,7 @@ class LinearRegionTest {
 
     @Test
     void writesCoordinatesFromConstructorInsteadOfParsingFileName() throws IOException {
-        Path path = tempDir.resolve("not-a-region-name.linear");
+        Path path = Files.createTempFile(tempDir, "not-a-region-name", "linear");
         writeLinearRegion(path, 1234L, new byte[] {1, 2, 3});
         LinearRegion region = new LinearRegion(null, path, 1, -2, 3);
 
