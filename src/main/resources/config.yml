@@ -75,7 +75,7 @@ worlds:
     # Inhabited time increases by one tick per player in the chunk, so it
     # increases faster when multiple players are present.
     # Set to 0 to disable the inhabited-time check.
-    inhabited-time: 0
+    min-inhabited-time: 0
 
 safe-login:
   # Whether to modify login location if in a deleted chunk.
