@@ -71,6 +71,11 @@ worlds:
     # Set to lower than 1 to disable this check
     # Used with days-till-flag-expires, so the task will check the min-interactions in the chunk every X days
     min-interactions: 10
+    # Minimum inhabited time, in ticks, required to preserve a chunk.
+    # Inhabited time increases by one tick per player in the chunk, so it
+    # increases faster when multiple players are present.
+    # Set to 0 to disable the inhabited-time check.
+    inhabited-time: 0
 
 safe-login:
   # Whether to modify login location if in a deleted chunk.
@@ -109,6 +114,3 @@ hooks:
 # MEDIUM - More debug messages. Causes lots of spam but can help you resolve startup issues.
 # HIGH - Lots of debug messages. Don't enable this unless you have a serious issue - excessive logging causes lag.
 debug-level: LOW
-
-# Please don't mess with this, you may lose settings. Controls automatic updates to config layout.
-config-version: 3

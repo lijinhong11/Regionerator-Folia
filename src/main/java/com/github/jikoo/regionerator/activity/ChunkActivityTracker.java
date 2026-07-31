@@ -34,7 +34,7 @@ public class ChunkActivityTracker {
         });
     }
 
-    public List<Chunk> pollExpiredChunks(World world, int days) {
+    public List<Chunk> pollExpiredChunks(World world, int days, int minInteractions) {
         long now = System.currentTimeMillis();
         long windowMillis = TimeUnit.DAYS.toMillis(days);
 
@@ -51,7 +51,9 @@ public class ChunkActivityTracker {
 
             if (now - window.getWindowStart() < windowMillis) continue;
 
-            expired.add(chunk);
+            if (minInteractions > 0 && window.getCount() < minInteractions) {
+                expired.add(chunk);
+            }
 
             it.remove();
         }
@@ -60,7 +62,7 @@ public class ChunkActivityTracker {
     }
 
     public static final class ActivityWindow {
-        private final long windowStart; // 窗口起始时间
+        private final long windowStart;
         private int count;
 
         public ActivityWindow(long windowStart) {

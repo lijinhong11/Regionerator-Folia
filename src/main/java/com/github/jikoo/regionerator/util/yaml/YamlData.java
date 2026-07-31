@@ -21,13 +21,11 @@ import org.bukkit.Location;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings({"unused", "SameParameterValue"})
 public abstract class YamlData {
-
     final @NotNull Regionerator plugin;
     private final @NotNull Supplier<FileConfiguration> loadSupplier;
     private final @NotNull Consumer<FileConfiguration> saveConsumer;
@@ -73,6 +71,10 @@ public abstract class YamlData {
         return this.storage.getInt(path);
     }
 
+    int getInt(@NotNull String path, int def) {
+        return this.storage.getInt(path, def);
+    }
+
     boolean getBoolean(@NotNull String path) {
         return this.storage.getBoolean(path);
     }
@@ -96,11 +98,6 @@ public abstract class YamlData {
 
     <T extends ConfigurationSerializable> @Nullable T getSerializable(@NotNull String path, @NotNull Class<T> clazz) {
         return this.storage.getSerializable(path, clazz);
-    }
-
-    @Nullable
-    Vector getVector(@NotNull String path) {
-        return this.storage.getVector(path);
     }
 
     @Nullable

@@ -10,14 +10,14 @@
  */
 package com.github.jikoo.regionerator.listeners;
 
+import com.destroystokyo.paper.event.entity.CreeperIgniteEvent;
 import com.github.jikoo.regionerator.activity.ChunkActivityTracker;
 import io.papermc.paper.event.entity.EntityMoveEvent;
 import org.bukkit.Chunk;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.*;
-import org.bukkit.event.entity.EntityInteractEvent;
-import org.bukkit.event.entity.EntityPortalEvent;
+import org.bukkit.event.entity.*;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.jetbrains.annotations.ApiStatus;
@@ -49,6 +49,26 @@ public class ChunkActivityListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onEntityPortal(EntityPortalEvent e) {
+        tracker.recordActivity(e.getEntity().getChunk());
+    }
+
+    @EventHandler
+    public void onEntitySpawn(EntitySpawnEvent e) {
+        tracker.recordActivity(e.getEntity().getChunk());
+    }
+
+    @EventHandler
+    public void onCreeperPower(CreeperPowerEvent e) {
+        tracker.recordActivity(e.getEntity().getChunk());
+    }
+
+    @EventHandler
+    public void onCreeperIgnite(CreeperIgniteEvent e) {
+        tracker.recordActivity(e.getEntity().getChunk());
+    }
+
+    @EventHandler
+    public void onEntityExplode(EntityExplodeEvent e) {
         tracker.recordActivity(e.getEntity().getChunk());
     }
 

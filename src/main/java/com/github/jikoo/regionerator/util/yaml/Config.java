@@ -13,19 +13,26 @@ package com.github.jikoo.regionerator.util.yaml;
 import com.github.jikoo.regionerator.DebugLevel;
 import com.github.jikoo.regionerator.Regionerator;
 import com.google.common.collect.ImmutableMap;
+import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.*;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.configuration.file.YamlConfigurationOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
-public class Config extends ConfigYamlData {
+public class Config extends YamlData {
 
     /** Constant representing the default flag timestamp. */
     public static final long FLAG_DEFAULT = -1;
@@ -51,7 +58,7 @@ public class Config extends ConfigYamlData {
     private int cacheMaxSize;
 
     public Config(@NotNull Regionerator plugin) {
-        super(plugin);
+        super(plugin, plugin::getConfig, yaml -> plugin.saveConfig());
         reload();
     }
 
@@ -59,7 +66,7 @@ public class Config extends ConfigYamlData {
     public void reload() {
         super.reload();
 
-        ConfigUpdater.doUpdates(this);
+        completeFile();
 
         reconsiderWorldValidity();
 
@@ -88,6 +95,46 @@ public class Config extends ConfigYamlData {
         cacheBatchMax = Math.max(1, getInt("cache.maximum-batch-size"));
         cacheBatchDelay = Math.max(0L, getLong("cache.batch-delay"));
         cacheMaxSize = Math.max(50_000, getInt("cache.max-cache-size"));
+    }
+
+    private void completeFile() {
+        InputStream stream = plugin.getResource("config.yml");
+        File file = new File(plugin.getDataFolder(), "config.yml");
+
+        try {
+            InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8);
+            YamlConfiguration configuration = YamlConfiguration.loadConfiguration(reader);
+            YamlConfiguration configuration2 = YamlConfiguration.loadConfiguration(file);
+
+            for (String key : configuration.getKeys(true)) {
+                Object value = configuration.get(key);
+                if (value instanceof List<?>) {
+                    List<?> list2 = configuration2.getList(key);
+                    if (list2 == null) {
+                        configuration2.set(key, value);
+                    }
+                }
+
+                if (!configuration2.contains(key)) {
+                    configuration2.set(key, value);
+                }
+
+                if (!configuration.getComments(key).equals(configuration2.getComments(key))) {
+                    configuration2.setComments(key, configuration.getComments(key));
+                }
+
+                YamlConfigurationOptions options1 = configuration.options();
+                YamlConfigurationOptions options2 = configuration2.options();
+
+                if (!options2.getHeader().equals(options1.getHeader())) {
+                    options2.setHeader(options1.getHeader());
+                }
+            }
+
+            configuration2.save(file);
+        } catch (Exception e) {
+            plugin.getLogger().log(Level.WARNING, "File completion of config.yml is failed.", e);
+        }
     }
 
     public void reconsiderWorldValidity() {
@@ -143,11 +190,13 @@ public class Config extends ConfigYamlData {
     }
 
     public int getMinInteractionsInWorld(World world) {
-        if (raw().contains("worlds.default.min-interactions")) {
-            return getInt("worlds.default.min-interactions");
-        } else {
-            return raw().getInt("worlds." + world.getName() + ".days-till-flag-expires", -1);
-        }
+        return raw().getInt(
+                        "worlds." + world.getName() + ".min-interactions",
+                        raw().getInt("worlds.default.min-interactions", 0));
+    }
+
+    public int getMinInhabitedTimeInWorld(World world) {
+        return getInt("worlds." + world.getName() + ".min-inhabited-time", 0);
     }
 
     public int getDeletionChunkCount() {

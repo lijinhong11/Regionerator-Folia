@@ -25,8 +25,10 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import net.minecraft.world.level.chunk.status.ChunkStatus;
 import org.bukkit.Chunk;
 import org.bukkit.World;
+import org.bukkit.craftbukkit.CraftChunk;
 import org.bukkit.plugin.IllegalPluginAccessException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
  * Runnable for checking and deleting chunks and regions.
  */
 public class DeletionRunnable implements Consumer<WrappedTask> {
-
     private static final String STATS_FORMAT = "%s: checked %s, deleted %s regions & %s chunks";
 
     private final @NotNull Regionerator plugin;
@@ -78,7 +79,8 @@ public class DeletionRunnable implements Consumer<WrappedTask> {
         }
 
         int days = plugin.config().getExpiredDaysInWorld(world.getWorld());
-        lessInteractChunks = plugin.getTracker().pollExpiredChunks(world.getWorld(), days);
+        int minInteractions = plugin.config().getMinInteractionsInWorld(world.getWorld());
+        lessInteractChunks = plugin.getTracker().pollExpiredChunks(world.getWorld(), days, minInteractions);
 
         if (regions != null) {
             regions.forEach(this::handleRegion);
@@ -269,6 +271,17 @@ public class DeletionRunnable implements Consumer<WrappedTask> {
         long lastVisit = chunkInfo.getLastVisit();
         boolean isFresh = !plugin.config().isDeleteFreshChunks(world)
                 && lastVisit == plugin.config().getFlagGenerated(world);
+
+        CraftChunk craftChunk = (CraftChunk) chunkInfo.getBukkitChunk();
+        long inhabitedTime = craftChunk.getHandle(ChunkStatus.FULL).getInhabitedTime();
+        if (inhabitedTime < plugin.config().getMinInhabitedTimeInWorld(world)) {
+            plugin.debug(
+                    DebugLevel.HIGH,
+                    () -> String.format(
+                            "Chunk %s_%s_%s is marked as delete because of less inhabited time",
+                            chunkInfo.getWorld().getName(), chunkInfo.getChunkX(), chunkInfo.getChunkZ()));
+            return true;
+        }
 
         if (containsChunk(lessInteractChunks, world, chunkInfo.getChunkX(), chunkInfo.getChunkZ())) {
             plugin.debug(

@@ -32,15 +32,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class RegioneratorExecutor implements TabExecutor {
-
     private final @NotNull Regionerator plugin;
     private final @NotNull Map<String, DeletionRunnable> deletionRunnables;
-    // private final @NotNull FlagHandler flagHandler;
+    private final @NotNull FlagHandler flagHandler;
 
     public RegioneratorExecutor(
             @NotNull Regionerator plugin, @NotNull Map<String, DeletionRunnable> deletionRunnables) {
         this.plugin = plugin;
         this.deletionRunnables = deletionRunnables;
+        this.flagHandler = new FlagHandler(plugin);
     }
 
     @Override
@@ -111,11 +111,11 @@ public class RegioneratorExecutor implements TabExecutor {
                 return true;
             }
             case "flag" -> {
-                // flagHandler.handleFlags(sender, args, true);
+                flagHandler.handleFlags(sender, args, true);
                 return true;
             }
             case "unflag" -> {
-                // flagHandler.handleFlags(sender, args, false);
+                flagHandler.handleFlags(sender, args, false);
                 return true;
             }
             case "cache" -> {
@@ -126,7 +126,6 @@ public class RegioneratorExecutor implements TabExecutor {
         }
 
         if (sender instanceof Player player && args[0].equals("check")) {
-
             if (!plugin.config().isEnabled(player.getWorld().getName())) {
                 player.sendMessage("World is not configured for deletion.");
             }

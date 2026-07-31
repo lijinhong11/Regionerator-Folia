@@ -17,7 +17,6 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
 public class MiscData extends FileYamlData {
-
     private final @NotNull Regionerator plugin;
 
     public MiscData(@NotNull Regionerator plugin, @NotNull File file) {
