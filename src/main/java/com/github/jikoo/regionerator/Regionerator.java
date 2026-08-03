@@ -66,23 +66,6 @@ public class Regionerator extends JavaPlugin {
         config = new Config(this);
         miscData = new MiscData(this, new File(getDataFolder(), "data.yml"));
 
-        boolean migrated = false;
-        Set<String> worlds = getServer().getWorlds().stream()
-                .map(World::getName)
-                .filter(config::isEnabled)
-                .collect(Collectors.toSet());
-        for (String world : worlds) {
-            if (getConfig().isLong("delete-this-to-reset-plugin." + world)) {
-                // Migrate existing settings
-                miscData.setNextCycle(world, getConfig().getLong("delete-this-to-reset-plugin." + world));
-                migrated = true;
-            }
-        }
-        if (migrated) {
-            getConfig().set("delete-this-to-reset-plugin", null);
-            saveConfig();
-        }
-
         try {
             RegionImplementation regionImpl = RegionImplementation.valueOf(
                     getConfig().getString("world-implementation", "NONE").toUpperCase());
