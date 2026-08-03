@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.github.jikoo</groupId>
   <artifactId>regionerator</artifactId>
-  <version>3.0.2-SNAPSHOT-FORK</version>
+  <version>3.0.3-SNAPSHOT-FORK</version>
   <name>Regionerator</name>
 
   <properties>
@@ -306,7 +306,7 @@
   </pluginRepositories>
 
   <build>
-    <finalName>${project.name}</finalName>
+    <finalName>${project.name}-${project.version}</finalName>
 
     <resources>
       <resource>
